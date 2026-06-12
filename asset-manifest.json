@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/ai-shot-list-generator/static/css/main.fce6e66b.css",
-    "main.js": "/ai-shot-list-generator/static/js/main.0df90e1d.js",
+    "main.js": "/ai-shot-list-generator/static/js/main.6de7f483.js",
     "static/js/762.58143985.chunk.js": "/ai-shot-list-generator/static/js/762.58143985.chunk.js",
     "static/js/239.ce45843f.chunk.js": "/ai-shot-list-generator/static/js/239.ce45843f.chunk.js",
     "static/js/213.a70fa04b.chunk.js": "/ai-shot-list-generator/static/js/213.a70fa04b.chunk.js",
     "static/js/455.6539a5a6.chunk.js": "/ai-shot-list-generator/static/js/455.6539a5a6.chunk.js",
     "index.html": "/ai-shot-list-generator/index.html",
     "main.fce6e66b.css.map": "/ai-shot-list-generator/static/css/main.fce6e66b.css.map",
-    "main.0df90e1d.js.map": "/ai-shot-list-generator/static/js/main.0df90e1d.js.map",
+    "main.6de7f483.js.map": "/ai-shot-list-generator/static/js/main.6de7f483.js.map",
     "762.58143985.chunk.js.map": "/ai-shot-list-generator/static/js/762.58143985.chunk.js.map",
     "239.ce45843f.chunk.js.map": "/ai-shot-list-generator/static/js/239.ce45843f.chunk.js.map",
     "213.a70fa04b.chunk.js.map": "/ai-shot-list-generator/static/js/213.a70fa04b.chunk.js.map",
@@ -16,6 +16,6 @@
   },
   "entrypoints": [
     "static/css/main.fce6e66b.css",
-    "static/js/main.0df90e1d.js"
+    "static/js/main.6de7f483.js"
   ]
 }
