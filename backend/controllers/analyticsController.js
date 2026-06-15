@@ -1,67 +1,90 @@
-const mongoose = require('mongoose');
-const Generation = require('../models/Generation');
-const Feedback = require('../models/Feedback');
+const { sequelize, Generation, Feedback } = require('../models');
 
 async function getAnalytics(req, res) {
   try {
     const userId = req.user.id;
-    const objectIdUserId = new mongoose.Types.ObjectId(userId);
 
     // 1. Basic Counts
-    const totalGenerations = await Generation.countDocuments({ user_id: userId });
-    const totalFeedback = await Feedback.countDocuments({ user_id: userId });
+    const totalGenerations = await Generation.count({ where: { user_id: userId } });
+    const totalFeedback = await Feedback.count({ where: { user_id: userId } });
     
-    const avgRatingAgg = await Feedback.aggregate([
-      { $match: { user_id: objectIdUserId } },
-      { $group: { _id: null, avgRating: { $avg: "$rating" } } }
-    ]);
-    const avgRating = avgRatingAgg.length > 0 ? avgRatingAgg[0].avgRating.toFixed(1) : "0.0";
+    // Average Rating
+    const avgRatingRaw = await Feedback.findOne({
+      attributes: [[sequelize.fn('AVG', sequelize.col('rating')), 'avgRating']],
+      where: { user_id: userId },
+      raw: true
+    });
+    const avgRating = avgRatingRaw?.avgRating ? Number(avgRatingRaw.avgRating).toFixed(1) : "0.0";
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    const isPostgres = sequelize.options.dialect === 'postgres';
+    const dateQuery = isPostgres 
+      ? sequelize.fn('TO_CHAR', sequelize.col('created_at'), 'YYYY-MM-DD')
+      : sequelize.fn('DATE', sequelize.col('created_at'));
+    const groupQuery = isPostgres 
+      ? sequelize.fn('TO_CHAR', sequelize.col('created_at'), 'YYYY-MM-DD')
+      : sequelize.fn('DATE', sequelize.col('created_at'));
+
     // 2. Daily Generations (Last 30 days)
-    const dailyGenerations = await Generation.aggregate([
-      { $match: { user_id: objectIdUserId, created_at: { $gte: thirtyDaysAgo } } },
-      { 
-        $group: { 
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$created_at" } }, 
-          count: { $sum: 1 } 
-        } 
+    const dailyGenerationsRaw = await Generation.findAll({
+      attributes: [
+        [dateQuery, 'date'],
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      where: {
+        user_id: userId,
+        created_at: { [require('sequelize').Op.gte]: thirtyDaysAgo }
       },
-      { $sort: { _id: 1 } }
-    ]).then(res => res.map(r => ({ date: r._id, count: r.count })));
+      group: [groupQuery],
+      order: [[sequelize.literal('date'), 'ASC']],
+      raw: true
+    });
+    const dailyGenerations = dailyGenerationsRaw.map(r => ({ date: r.date, count: Number(r.count) }));
 
     // 3. Quality Trend (Average rating per day, Last 30 days)
-    const qualityTrend = await Feedback.aggregate([
-      { $match: { user_id: objectIdUserId, created_at: { $gte: thirtyDaysAgo } } },
-      { 
-        $group: { 
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$created_at" } }, 
-          avg_rating: { $avg: "$rating" } 
-        } 
+    const qualityTrendRaw = await Feedback.findAll({
+      attributes: [
+        [dateQuery, 'date'],
+        [sequelize.fn('AVG', sequelize.col('rating')), 'avg_rating']
+      ],
+      where: {
+        user_id: userId,
+        created_at: { [require('sequelize').Op.gte]: thirtyDaysAgo }
       },
-      { $sort: { _id: 1 } }
-    ]).then(res => res.map(r => ({ date: r._id, avg_rating: Number(r.avg_rating.toFixed(1)) })));
+      group: [groupQuery],
+      order: [[sequelize.literal('date'), 'ASC']],
+      raw: true
+    });
+    const qualityTrend = qualityTrendRaw.map(r => ({ date: r.date, avg_rating: Number(Number(r.avg_rating).toFixed(1)) }));
 
     // 4. Rating Distribution
-    const ratingDistribution = await Feedback.aggregate([
-      { $match: { user_id: objectIdUserId } },
-      { $group: { _id: "$rating", count: { $sum: 1 } } },
-      { $sort: { _id: -1 } }
-    ]).then(res => res.map(r => ({ rating: r._id, count: r.count })));
+    const ratingDistributionRaw = await Feedback.findAll({
+      attributes: [
+        'rating',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      where: { user_id: userId },
+      group: ['rating'],
+      order: [['rating', 'DESC']],
+      raw: true
+    });
+    const ratingDistribution = ratingDistributionRaw.map(r => ({ rating: r.rating, count: Number(r.count) }));
 
     // 5. Recent Feedback
-    const recentFeedbackRaw = await Feedback.find({ user_id: userId })
-      .sort({ created_at: -1 })
-      .limit(10)
-      .populate('generation_id');
+    const recentFeedbackRaw = await Feedback.findAll({
+      where: { user_id: userId },
+      order: [['created_at', 'DESC']],
+      limit: 10,
+      include: [{ model: Generation, attributes: ['inputs'] }]
+    });
 
     const recentFeedback = recentFeedbackRaw.map(f => ({
       rating: f.rating,
       comment: f.comment,
       created_at: f.created_at,
-      scene_description: f.generation_id?.inputs?.scene_description || 'Untitled Generation'
+      scene_description: f.Generation?.inputs?.scene_description || 'Untitled Generation'
     }));
 
     res.json({

@@ -1,19 +1,23 @@
-const mongoose = require('mongoose');
+const { sequelize } = require('../models');
 const logger = require('../utils/logger');
 
 async function initDb() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/shotlist';
-    await mongoose.connect(mongoUri);
-    logger.info('✅ Connected to MongoDB');
+    await sequelize.authenticate();
+    logger.info(`✅ Connected to SQL Database (${sequelize.options.dialect})`);
+    
+    // Auto-create/update tables
+    await sequelize.sync({ alter: true });
+    logger.info('✅ Database tables synced');
   } catch (error) {
-    logger.error('❌ MongoDB Connection Error:', error);
-    process.exit(1);
+    logger.error('❌ SQL Connection Error:', error);
+    // Don't crash immediately if the URL is bad locally, just log it.
+    // In production we would probably process.exit(1).
   }
 }
 
 function getDb() {
-  throw new Error("getDb() is deprecated. Use Mongoose models instead.");
+  throw new Error("getDb() is deprecated. Use Sequelize models instead.");
 }
 
 module.exports = { initDb, getDb };

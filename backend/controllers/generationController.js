@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const Generation = require('../models/Generation');
+const { Generation } = require('../models');
 const { generateShotList } = require('../utils/aiService');
 const logger = require('../utils/logger');
 
@@ -20,7 +20,7 @@ async function createGeneration(req, res) {
     
     const id = crypto.randomUUID();
     await Generation.create({
-      _id: id,
+      id: id,
       user_id: req.user.id,
       inputs: req.body,
       result: data,
@@ -46,15 +46,17 @@ async function getHistory(req, res) {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const totalCount = await Generation.countDocuments({ user_id: req.user.id });
+    const totalCount = await Generation.count({ where: { user_id: req.user.id } });
     
-    const records = await Generation.find({ user_id: req.user.id })
-      .sort({ created_at: -1 })
-      .skip(offset)
-      .limit(limit);
+    const records = await Generation.findAll({
+      where: { user_id: req.user.id },
+      order: [['created_at', 'DESC']],
+      offset,
+      limit
+    });
 
     const mappedRecords = records.map(r => ({
-      id: r._id,
+      id: r.id,
       created_at: r.created_at,
       inputs: r.inputs
     }));
@@ -77,14 +79,14 @@ async function getHistory(req, res) {
 async function getGenerationById(req, res) {
   try {
     const { id } = req.params;
-    const record = await Generation.findOne({ _id: id, user_id: req.user.id });
+    const record = await Generation.findOne({ where: { id, user_id: req.user.id } });
     
     if (!record) return res.status(404).json({ success: false, error: 'Not found' });
     
     res.json({
       success: true,
       data: {
-        id: record._id,
+        id: record.id,
         inputs: record.inputs,
         result: record.result,
         model: record.model,
