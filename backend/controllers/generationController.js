@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { getDb } = require('../config/database');
+const Generation = require('../models/Generation');
 const { generateShotList } = require('../utils/aiService');
 const logger = require('../utils/logger');
 
@@ -18,13 +18,14 @@ async function createGeneration(req, res) {
       cinematic_tone
     });
     
-    // Save to DB
-    const db = getDb();
     const id = crypto.randomUUID();
-    db.prepare(`
-      INSERT INTO generations (id, user_id, inputs, result, model)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(id, req.user.id, JSON.stringify(req.body), JSON.stringify(data), model);
+    await Generation.create({
+      _id: id,
+      user_id: req.user.id,
+      inputs: req.body,
+      result: data,
+      model
+    });
     
     res.json({
       success: true,
@@ -39,27 +40,28 @@ async function createGeneration(req, res) {
   }
 }
 
-function getHistory(req, res) {
+async function getHistory(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const db = getDb();
-    const totalCount = db.prepare('SELECT COUNT(*) as count FROM generations WHERE user_id = ?').get(req.user.id).count;
+    const totalCount = await Generation.countDocuments({ user_id: req.user.id });
     
-    const records = db.prepare(`
-      SELECT id, created_at, inputs
-      FROM generations
-      WHERE user_id = ?
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `).all(req.user.id, limit, offset)
-      .map(r => ({ ...r, inputs: JSON.parse(r.inputs) }));
+    const records = await Generation.find({ user_id: req.user.id })
+      .sort({ created_at: -1 })
+      .skip(offset)
+      .limit(limit);
+
+    const mappedRecords = records.map(r => ({
+      id: r._id,
+      created_at: r.created_at,
+      inputs: r.inputs
+    }));
 
     res.json({
       success: true,
-      data: records,
+      data: mappedRecords,
       pagination: {
         total: totalCount,
         page,
@@ -72,20 +74,19 @@ function getHistory(req, res) {
   }
 }
 
-function getGenerationById(req, res) {
+async function getGenerationById(req, res) {
   try {
-    const db = getDb();
     const { id } = req.params;
-    const record = db.prepare('SELECT * FROM generations WHERE id = ? AND user_id = ?').get(id, req.user.id);
+    const record = await Generation.findOne({ _id: id, user_id: req.user.id });
     
     if (!record) return res.status(404).json({ success: false, error: 'Not found' });
     
     res.json({
       success: true,
       data: {
-        id: record.id,
-        inputs: JSON.parse(record.inputs),
-        result: JSON.parse(record.result),
+        id: record._id,
+        inputs: record.inputs,
+        result: record.result,
         model: record.model,
         created_at: record.created_at
       }

@@ -3,7 +3,7 @@ const { body, param, validationResult } = require('express-validator');
 const { createGeneration, getHistory, getGenerationById } = require('../controllers/generationController');
 const { createFeedback } = require('../controllers/feedbackController');
 const { getTemplates } = require('../controllers/templateController');
-const { register, login, getMe } = require('../controllers/authController');
+const { register, login, getMe, forgotPassword, resetPassword } = require('../controllers/authController');
 const { requireAuth } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -35,6 +35,25 @@ router.post('/auth/login',
   validate,
   login
 );
+
+router.post('/auth/forgot-password',
+  [
+    body('email').isEmail().withMessage('Valid email required')
+  ],
+  validate,
+  forgotPassword
+);
+
+router.post('/auth/reset-password',
+  [
+    body('email').isEmail().withMessage('Valid email required'),
+    body('token').notEmpty().withMessage('Token is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  ],
+  validate,
+  resetPassword
+);
+
 
 router.get('/auth/me', requireAuth, getMe);
 

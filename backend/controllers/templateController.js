@@ -1,9 +1,8 @@
-const { getDb } = require('../config/database');
+const Template = require('../models/Template');
 
-function getTemplates(req, res) {
+async function getTemplates(req, res) {
   try {
-    const db = getDb();
-    const templates = db.prepare('SELECT * FROM templates WHERE is_public = 1 ORDER BY name').all();
+    const templates = await Template.find({ is_public: true }).sort({ name: 1 });
     res.json({ success: true, data: templates });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

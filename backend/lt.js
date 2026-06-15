@@ -25,3 +25,6 @@ async function startTunnel() {
 
 console.log('Starting persistent localtunnel...');
 startTunnel();
+
+// Keep process alive
+setInterval(() => {}, 1000 * 60 * 60);
