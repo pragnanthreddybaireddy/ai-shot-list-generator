@@ -1,21 +1,21 @@
 {
   "files": {
-    "main.css": "/ai-shot-list-generator/static/css/main.8aa54139.css",
-    "main.js": "/ai-shot-list-generator/static/js/main.d3a4d5f7.js",
+    "main.css": "/ai-shot-list-generator/static/css/main.323e4562.css",
+    "main.js": "/ai-shot-list-generator/static/js/main.3b699a9f.js",
     "static/js/762.58143985.chunk.js": "/ai-shot-list-generator/static/js/762.58143985.chunk.js",
     "static/js/239.ce45843f.chunk.js": "/ai-shot-list-generator/static/js/239.ce45843f.chunk.js",
     "static/js/213.a70fa04b.chunk.js": "/ai-shot-list-generator/static/js/213.a70fa04b.chunk.js",
     "static/js/455.6539a5a6.chunk.js": "/ai-shot-list-generator/static/js/455.6539a5a6.chunk.js",
     "index.html": "/ai-shot-list-generator/index.html",
-    "main.8aa54139.css.map": "/ai-shot-list-generator/static/css/main.8aa54139.css.map",
-    "main.d3a4d5f7.js.map": "/ai-shot-list-generator/static/js/main.d3a4d5f7.js.map",
+    "main.323e4562.css.map": "/ai-shot-list-generator/static/css/main.323e4562.css.map",
+    "main.3b699a9f.js.map": "/ai-shot-list-generator/static/js/main.3b699a9f.js.map",
     "762.58143985.chunk.js.map": "/ai-shot-list-generator/static/js/762.58143985.chunk.js.map",
     "239.ce45843f.chunk.js.map": "/ai-shot-list-generator/static/js/239.ce45843f.chunk.js.map",
     "213.a70fa04b.chunk.js.map": "/ai-shot-list-generator/static/js/213.a70fa04b.chunk.js.map",
     "455.6539a5a6.chunk.js.map": "/ai-shot-list-generator/static/js/455.6539a5a6.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.8aa54139.css",
-    "static/js/main.d3a4d5f7.js"
+    "static/css/main.323e4562.css",
+    "static/js/main.3b699a9f.js"
   ]
 }
