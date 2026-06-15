@@ -1,0 +1,7 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindcss.emmetForward": true,
+  "editor.quickSuggestions": {
+    "strings": true
+  }
+}

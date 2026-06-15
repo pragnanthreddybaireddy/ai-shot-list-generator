@@ -3,7 +3,10 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '/api',
   timeout: 60000,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 
+    'Content-Type': 'application/json',
+    'Bypass-Tunnel-Reminder': 'true'
+  }
 });
 
 api.interceptors.request.use((config) => {
