@@ -103,7 +103,7 @@ async function generateShotList(inputs) {
     // Fallback Mock Data so the UI doesn't break during API outages
     result = {
       text: JSON.stringify({
-        scene_summary: "A breathtaking cinematic moment capturing the essence of your prompt. (Note: AI API is currently overloaded, so this is a demonstration shot list.)",
+        scene_summary: `A breathtaking cinematic moment. (DEBUG ERROR: ${err.message})`,
         shots: [
           {
             shot_number: 1,
