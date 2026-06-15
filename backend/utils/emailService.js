@@ -1,48 +1,22 @@
-const nodemailer = require('nodemailer');
 const logger = require('./logger');
-
-let transporter;
-
-async function initTransporter() {
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // use STARTTLS
-      requireTLS: true,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
-  } else {
-    // Automatically generate a testing account if no credentials are provided
-    logger.info('No SMTP credentials found, generating Ethereal test account...');
-    const testAccount = await nodemailer.createTestAccount();
-    transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass
-      }
-    });
-    logger.info('Ethereal test account generated successfully.');
-  }
-}
-
-// Initialize on startup
-initTransporter().catch(console.error);
 
 async function sendPasswordResetEmail(toEmail, resetLink) {
   try {
     const senderEmail = process.env.SMTP_USER || 'noreply@digiquest.studio';
-    const mailOptions = {
-      from: `"Digiquest Studio" <${senderEmail}>`,
-      to: toEmail,
+    const apiKey = process.env.BREVO_API_KEY;
+
+    // Fallback if no API key is provided so we don't crash the server
+    if (!apiKey) {
+      logger.info(`[MOCK EMAIL] Password reset email would have been sent to ${toEmail}. Link: ${resetLink}`);
+      logger.info('To send real emails, please configure BREVO_API_KEY in Render.');
+      return true; 
+    }
+
+    const payload = {
+      sender: { name: "Digiquest Studio", email: senderEmail },
+      to: [{ email: toEmail }],
       subject: 'Reset Your Password - Digiquest Studio',
-      html: `
+      htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #ffffff; border-radius: 8px; padding: 40px; text-align: center;">
           <h1 style="color: #00f0ff; letter-spacing: 2px;">DIGIQUEST STUDIO</h1>
           <h2 style="color: #e2e8f0; margin-top: 30px;">Password Reset Request</h2>
@@ -60,19 +34,26 @@ async function sendPasswordResetEmail(toEmail, resetLink) {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    logger.info(`Password reset email sent to ${toEmail}: ${info.messageId}`);
-    
-    // If we're using Ethereal, print the preview URL
-    if (info.messageId && !process.env.SMTP_USER) {
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      logger.info(`✉️ PREVIEW EMAIL HERE: ${previewUrl}`);
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Brevo API Error: ${errorData}`);
     }
-    
+
+    logger.info(`Password reset email sent to ${toEmail} via Brevo HTTP API`);
     return true;
   } catch (error) {
     logger.error('Error sending email:', error);
-    throw new Error('Failed to send email. Please check your SMTP configuration.');
+    throw new Error('Failed to send email. Please check your Brevo configuration.');
   }
 }
 
