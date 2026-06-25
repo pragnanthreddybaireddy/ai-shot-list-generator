@@ -70,7 +70,19 @@ async function forgotPassword(req, res) {
     const secret = JWT_SECRET + user.password_hash;
     const token = jwt.sign({ id: user.id, email: user.email }, secret, { expiresIn: '15m' });
     
-    const baseUrl = process.env.FRONTEND_URL || 'https://pragnanthreddybaireddy.github.io/ai-shot-list-generator';
+    let baseUrl = process.env.FRONTEND_URL || 'https://pragnanthreddybaireddy.github.io/ai-shot-list-generator';
+    
+    // Adjust base URL if running locally, because Create React App uses the "homepage" 
+    // field from package.json and serves the app under /ai-shot-list-generator
+    if (baseUrl === 'http://localhost:3000' || baseUrl === 'http://localhost:3000/') {
+      baseUrl = 'http://localhost:3000/ai-shot-list-generator';
+    } else if (baseUrl === 'https://pragnanthreddybaireddy.github.io' || baseUrl === 'https://pragnanthreddybaireddy.github.io/') {
+      baseUrl = 'https://pragnanthreddybaireddy.github.io/ai-shot-list-generator';
+    }
+
+    // Ensure baseUrl doesn't end with a slash before adding /#/
+    baseUrl = baseUrl.replace(/\/$/, '');
+    
     const resetLink = `${baseUrl}/#/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
     
     await sendPasswordResetEmail(email, resetLink);
