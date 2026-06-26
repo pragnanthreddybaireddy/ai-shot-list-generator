@@ -74,10 +74,12 @@ async function forgotPassword(req, res) {
     
     // Adjust base URL if running locally, because Create React App uses the "homepage" 
     // field from package.json and serves the app under /ai-shot-list-generator
-    if (baseUrl === 'http://localhost:3000' || baseUrl === 'http://localhost:3000/') {
-      baseUrl = 'http://localhost:3000/ai-shot-list-generator';
-    } else if (baseUrl === 'https://pragnanthreddybaireddy.github.io' || baseUrl === 'https://pragnanthreddybaireddy.github.io/') {
-      baseUrl = 'https://pragnanthreddybaireddy.github.io/ai-shot-list-generator';
+    if (baseUrl.includes('localhost') && !baseUrl.includes('ai-shot-list-generator')) {
+      baseUrl = baseUrl.replace(/\/$/, '') + '/ai-shot-list-generator';
+    } 
+    // Force the correct path for GitHub pages if it's missing
+    else if (baseUrl.includes('github.io') && !baseUrl.includes('ai-shot-list-generator')) {
+      baseUrl = baseUrl.replace(/\/$/, '') + '/ai-shot-list-generator';
     }
 
     // Ensure baseUrl doesn't end with a slash before adding /#/
